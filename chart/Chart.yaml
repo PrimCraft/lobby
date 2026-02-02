@@ -2,17 +2,14 @@ apiVersion: v2
 name: lobby
 description: Minestom lobby server for PrimCraft
 type: application
-version: 2026.2.1
+version: 2026.2.2
 appVersion: "2026.2.1"
-
 keywords:
   - minecraft
   - minestom
   - lobby
-
 home: https://github.com/PrimCraft/lobby
 sources:
   - https://github.com/PrimCraft/lobby
-
 maintainers:
   - name: bakas
