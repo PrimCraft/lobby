@@ -33,14 +33,16 @@ jobs:
 
       - name: Install tools
         run: |
+          mkdir -p $HOME/.local/bin
           # Install yq
-          curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64 -o /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq
+          curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64 -o $HOME/.local/bin/yq
+          chmod +x $HOME/.local/bin/yq
           # Install AWS CLI
           curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
           unzip -q awscliv2.zip
-          ./aws/install --update
+          ./aws/install --bin-dir $HOME/.local/bin --install-dir $HOME/.local/aws-cli --update
           rm -rf aws awscliv2.zip
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
