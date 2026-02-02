@@ -31,6 +31,11 @@ tolerations:
     value: "spot"
     effect: "NoSchedule"
 
+# Velocity forwarding secret (required for modern forwarding)
+# velocitySecret:
+#   secretName: gateway-secrets
+#   key: forwardingSecret
+
 # Pod annotations
 podAnnotations: {}
 

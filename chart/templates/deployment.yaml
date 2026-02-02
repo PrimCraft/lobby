@@ -28,6 +28,14 @@ spec:
             - name: minecraft
               containerPort: 25565
               protocol: TCP
+          {{- if .Values.velocitySecret }}
+          env:
+            - name: VELOCITY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.velocitySecret.secretName }}
+                  key: {{ .Values.velocitySecret.key }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
