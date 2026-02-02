@@ -73,7 +73,7 @@ fun main() {
     val instance = instanceManager.createInstanceContainer()
 
     // Enable lighting calculation
-    instance.setChunkSupplier(LightingChunk::new)
+    instance.setChunkSupplier(::LightingChunk)
 
     // Set time to noon for full daylight
     instance.time = 6000
