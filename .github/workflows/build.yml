@@ -85,7 +85,11 @@ jobs:
 
       - name: Update chart and build version
         run: |
-          yq -i '.version = "${{ steps.version.outputs.version }}"' chart/Chart.yaml
+          # Chart version must be valid semver (3 components max)
+          # Extract first 3 components for chart version
+          CHART_VERSION=$(echo "${{ steps.version.outputs.version }}" | cut -d. -f1-3)
+          yq -i ".version = \"${CHART_VERSION}\"" chart/Chart.yaml
+          yq -i ".appVersion = \"${{ steps.version.outputs.version }}\"" chart/Chart.yaml
           sed -i 's/^version = .*/version = "${{ steps.version.outputs.version }}"/' build.gradle.kts
           cat chart/Chart.yaml
 
