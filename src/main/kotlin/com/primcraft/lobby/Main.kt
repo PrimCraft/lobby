@@ -2,8 +2,8 @@ package com.primcraft.lobby
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.minestom.server.Auth
 import net.minestom.server.MinecraftServer
-import net.minestom.server.ServerSettings
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
@@ -65,11 +65,7 @@ fun main() {
         ?: error("VELOCITY_SECRET environment variable is required")
 
     // Initialize with Velocity modern forwarding
-    val server = MinecraftServer.init(
-        ServerSettings.builder()
-            .velocityForwarding(forwardingSecret)
-            .build()
-    )
+    val server = MinecraftServer.init(Auth.Velocity(forwardingSecret))
     println("Velocity modern forwarding enabled")
 
     val instanceManager = MinecraftServer.getInstanceManager()
