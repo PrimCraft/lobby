@@ -11,6 +11,7 @@ import net.minestom.server.entity.metadata.display.TextDisplayMeta
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
 import net.minestom.server.event.player.PlayerMoveEvent
 import net.minestom.server.instance.InstanceContainer
+import net.minestom.server.instance.LightingChunk
 import net.minestom.server.instance.block.Block
 import net.minestom.server.network.NetworkBuffer
 import net.minestom.server.timer.TaskSchedule
@@ -70,6 +71,13 @@ fun main() {
 
     val instanceManager = MinecraftServer.getInstanceManager()
     val instance = instanceManager.createInstanceContainer()
+
+    // Enable lighting calculation
+    instance.setChunkSupplier(LightingChunk::new)
+
+    // Set time to noon for full daylight
+    instance.time = 6000
+    instance.timeRate = 0 // Freeze time
 
     // Initialize portals
     servers.forEach { config ->
