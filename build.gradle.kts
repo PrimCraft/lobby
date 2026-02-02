@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.primcraft"
-version = "2026.2.2.1"
+version = "2026.2.2"
 
 repositories {
     mavenCentral()
