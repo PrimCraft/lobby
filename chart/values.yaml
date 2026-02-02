@@ -1,0 +1,41 @@
+# Lobby (Minestom) Helm chart values
+
+replicaCount: 1
+
+image:
+  repository: ""  # Set by Flux/CI (e.g., <account>.dkr.ecr.ap-northeast-1.amazonaws.com/primcraft/lobby)
+  tag: ""         # Set by Flux/CI
+  pullPolicy: IfNotPresent
+
+# Resource limits - lobby is lightweight
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 25565
+
+# Node scheduling - run on spot workers
+nodeSelector:
+  node-type: spot
+
+tolerations:
+  - key: "lifecycle"
+    operator: "Equal"
+    value: "spot"
+    effect: "NoSchedule"
+
+# Pod annotations
+podAnnotations: {}
+
+# Security context
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000

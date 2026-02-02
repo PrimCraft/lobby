@@ -1,0 +1,116 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docker/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (default: CalVer YYYY.M.D)'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: primcraft/lobby
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Generate version tag
+        id: version
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            VERSION="${{ inputs.tag }}"
+          else
+            VERSION=$(date +%Y.%-m.%-d)
+            # Add build number if multiple builds same day
+            EXISTING=$(aws ecr describe-images \
+              --repository-name ${{ env.ECR_REPOSITORY }} \
+              --query "imageDetails[?starts_with(imageTags[0], '${VERSION}')].imageTags[0]" \
+              --output text 2>/dev/null || echo "")
+            if [ -n "$EXISTING" ] && [ "$EXISTING" != "None" ]; then
+              COUNT=$(echo "$EXISTING" | wc -w | tr -d ' ')
+              VERSION="${VERSION}.${COUNT}"
+            fi
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.version.outputs.version }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update chart and build version
+        run: |
+          yq -i '.version = "${{ steps.version.outputs.version }}"' chart/Chart.yaml
+          sed -i 's/^version = .*/version = "${{ steps.version.outputs.version }}"/' build.gradle.kts
+          cat chart/Chart.yaml
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Lobby ${{ steps.version.outputs.version }}
+          body: |
+            ## Lobby ${{ steps.version.outputs.version }}
+
+            Minestom-based lobby server for PrimCraft.
+          make_latest: true
+
+      - name: Commit version updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add chart/Chart.yaml build.gradle.kts
+          git commit -m "Update version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push
+
+      - name: Summary
+        run: |
+          echo "### Build Complete :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
