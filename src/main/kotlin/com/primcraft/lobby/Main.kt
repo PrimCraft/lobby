@@ -3,7 +3,7 @@ package com.primcraft.lobby
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.MinecraftServer
-import net.minestom.server.extras.velocity.VelocityProxy
+import net.minestom.server.ServerSettings
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
@@ -60,12 +60,16 @@ val servers = listOf(
 val portals = ConcurrentHashMap<String, Portal>()
 
 fun main() {
-    val server = MinecraftServer.init()
-
-    // Enable Velocity modern forwarding
+    // Get Velocity forwarding secret from environment
     val forwardingSecret = System.getenv("VELOCITY_SECRET")
         ?: error("VELOCITY_SECRET environment variable is required")
-    VelocityProxy.enable(forwardingSecret)
+
+    // Initialize with Velocity modern forwarding
+    val server = MinecraftServer.init(
+        ServerSettings.builder()
+            .velocityForwarding(forwardingSecret)
+            .build()
+    )
     println("Velocity modern forwarding enabled")
 
     val instanceManager = MinecraftServer.getInstanceManager()
